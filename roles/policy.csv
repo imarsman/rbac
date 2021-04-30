@@ -1,18 +1,26 @@
 # The following is a set of predicates and groupings
 # for carrying out various actions on objects.
 
-# The library assumes that users are included in the policy file but it works
-# fine just using the roles defined for a client in the client's config file.
-# The roles code iterates through all of the roles for a user and if any return
-# an enabling response to a check the client is assumed to be authorized for
-# the action tested.
+# The Casbin library is extremely flexible in how policies and models can be
+# implemented. This implementation leans towards use for roles attached to users
+# with actions on object.
 
-# The predicates give a role then an object then an action
-# Subjects have a set of one or more roles from their configuration
-# object represents an object to be acted on
-# actions are arbitrary but gramatically meaningful
-# groups combine a new role with an existing predicate role
+# The Casbin library tends to assume that users are included in the policy file
+# but enforcement works fine just using the roles defined for a client in the
+# client's config file. The roles code iterates through all of the roles for a
+# user and if any return # an enabling response to a check the client is assumed
+# to be authorized for the action tested.
 
+# - predicates lines give a role (subject) then an object then an action
+#   - subjects have a set of one or more roles from their configuration
+#   - objects represent objects upon which to act
+#   - actions are arbitrary but should be meaningful
+#     - Casbin allows regular expressions to be used to allow for matching of
+#       actions as long as the model has been defined to allow this
+# - groups combine a new role with an existing predicate role
+
+# Predicates
+# Sub-roles used by later roles. Could be used as roles when authenticating as well.
 p, contentview, obj-content, read
 
 p, accountedit, obj-account, (read)|(write)
@@ -23,6 +31,7 @@ p, contentadmin, obj-content, (read)|(write)|(create)|(delete)
 
 p, accountadmin, obj-account, (read)|(write)|(create)|(delete)
 
+# Groups
 # Base user role
 g, user, contentview
 

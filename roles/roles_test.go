@@ -79,6 +79,7 @@ var Objects = objects{
 	Account: "obj-account",
 }
 
+// Action struct to hold the various named actions
 type actions struct {
 	Read   string
 	Write  string
@@ -86,7 +87,7 @@ type actions struct {
 	Delete string
 }
 
-// Actions things that can be allowed on an object by a role
+// Actions values that can be allowed on an object by a role
 var Actions = actions{
 	Read:   "read",
 	Write:  "write",
@@ -94,7 +95,7 @@ var Actions = actions{
 	Delete: "delete",
 }
 
-// roles a struct defining various roles
+// Roles struct defining various roles that a user may posess
 type userRoles struct {
 	User   string
 	Editor string
@@ -102,7 +103,7 @@ type userRoles struct {
 	Root   string
 }
 
-// Roles roles that can be granted to clients
+// Roles values for roles that can be granted to clients
 var Roles = userRoles{
 	User:   "user",
 	Editor: "editor",
@@ -110,7 +111,7 @@ var Roles = userRoles{
 	Root:   "root",
 }
 
-// user simulate a user with roles defined
+// user struct simulates a user with roles defined
 type user struct {
 	name  string
 	roles []string
@@ -124,7 +125,7 @@ func newUser(name string, roles []string) user {
 	return *u
 }
 
-// authObj simulate a struct that can be used to authorize an action
+// authObj simulates a struct that can be used to authorize an action
 type authObj struct {
 	user   user
 	object string
@@ -144,10 +145,12 @@ func newAuthObj(u user, object, action string) authObj {
 	return ao
 }
 
+// canAct define whether one of a set of roles can act on an object
 func (ao *authObj) canAct() bool {
 	return roles.CheckAllowForRoles(enforcer(), ao.object, ao.action, ao.user.roles...)
 }
 
+// TestRole test the basic role functionality
 func TestRole(t *testing.T) {
 	is := is.New(t)
 
@@ -226,22 +229,19 @@ func BenchmarkCheckRoles(b *testing.B) {
 	is.Equal(pass, true) // Should not have an empty time
 }
 
-func BenchmarkCheckRolesBare(b *testing.B) {
-	is := is.New(b)
+// func BenchmarkCheckRolesBare(b *testing.B) {
+// 	is := is.New(b)
 
-	// rootRole := []string{Roles.Root}
-	// rootUser := newUser("admin", rootRole)
+// 	var pass bool
 
-	var pass bool
+// 	b.SetBytes(bechmarkBytesPerOp)
+// 	b.ReportAllocs()
+// 	b.SetParallelism(30)
+// 	b.RunParallel(func(pb *testing.PB) {
+// 		for pb.Next() {
+// 			pass = roles.CheckAllowForRoles(enforcer(), Objects.Content, Actions.Delete, []string{Roles.Root}...)
+// 		}
+// 	})
 
-	b.SetBytes(bechmarkBytesPerOp)
-	b.ReportAllocs()
-	b.SetParallelism(30)
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			pass = roles.CheckAllowForRoles(enforcer(), Objects.Content, Actions.Delete, []string{Roles.Root}...)
-		}
-	})
-
-	is.Equal(pass, true) // Should not have an empty time
-}
+// 	is.Equal(pass, true) // Should not have an empty time
+// }
