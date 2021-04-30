@@ -1,7 +1,9 @@
 package roles_test
 
 import (
+	// Allow embedding of policy and model file data.
 	_ "embed"
+
 	"fmt"
 	"sync"
 	"sync/atomic"

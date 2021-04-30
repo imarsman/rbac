@@ -1,9 +1,6 @@
 package roles
 
 import (
-	// Allow loading of policy and model
-	_ "embed"
-
 	"github.com/casbin/casbin"
 )
 
