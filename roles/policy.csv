@@ -1,0 +1,38 @@
+# The following is a set of predicates and groupings
+# for carrying out various actions on objects.
+
+# The library assumes that users are included in the policy file but it works
+# fine just using the roles defined for a client in the client's config file.
+# The roles code iterates through all of the roles for a user and if any return
+# an enabling response to a check the client is assumed to be authorized for
+# the action tested.
+
+# The predicates give a role then an object then an action
+# Subjects have a set of one or more roles from their configuration
+# object represents an object to be acted on
+# actions are arbitrary but gramatically meaningful
+# groups combine a new role with an existing predicate role
+
+p, contentview, obj-content, read
+
+p, accountedit, obj-account, (read)|(write)
+
+p, contentedit, obj-content, (read)|(write)
+
+p, contentadmin, obj-content, (read)|(write)|(create)|(delete)
+
+p, accountadmin, obj-account, (read)|(write)|(create)|(delete)
+
+# Base user role
+g, user, contentview
+
+# Editor role
+g, editor, contentedit
+
+# Admin role
+g, admin, contentedit
+g, admin, accountedit
+
+# Root role
+g, root, contentadmin
+g, root, accountadmin
