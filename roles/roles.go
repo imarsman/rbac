@@ -5,26 +5,7 @@ import (
 	_ "embed"
 
 	"github.com/casbin/casbin"
-	// Adapter to use for casbin to create adapter from strings
-	// - for embedded model and policy
 )
-
-// var atomicValue atomic.Value
-
-// enforcer get reference to the enforcer
-// func enforcer() *casbin.Enforcer {
-// 	return atomicValue.Load().(*casbin.Enforcer)
-// }
-
-// SetEnforcer load in model and policy file for role enforcement and store it
-// in atomic value. Failure to run this before using the enforcer will result in
-// a panic.
-// func SetEnforcer(policy, model string) {
-// 	sa := scas.NewAdapter(policy)
-// 	e := casbin.NewEnforcer(casbin.NewModel(model), sa)
-
-// 	atomicValue.Store(e)
-// }
 
 func init() {
 }

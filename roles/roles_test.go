@@ -11,6 +11,8 @@ import (
 	"github.com/casbin/casbin"
 	"github.com/imarsman/rbac/roles"
 	"github.com/matryer/is"
+
+	// Adapter to allow enforcer to be created from a string
 	scas "github.com/qiangmzsx/string-adapter"
 )
 
