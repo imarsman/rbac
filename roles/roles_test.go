@@ -4,11 +4,14 @@ import (
 	_ "embed"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/casbin/casbin"
 	"github.com/imarsman/rbac/roles"
 	"github.com/matryer/is"
+	scas "github.com/qiangmzsx/string-adapter"
 )
 
 // casbin policy file loaded as string using embed
@@ -18,6 +21,8 @@ var casbinPolicy string
 // casbin model file loaded as string using embed
 //go:embed model.conf
 var casbinModel string
+
+var atomicValue atomic.Value
 
 var loadModelOnce sync.Once
 
@@ -43,10 +48,20 @@ const bechmarkBytesPerOp int64 = 10
 
 func init() {
 	start := time.Now()
-	loadModelOnce.Do(func() {
-		roles.SetEnforcer(casbinPolicy, casbinModel)
-	})
+	SetEnforcer(casbinPolicy, casbinModel)
 	fmt.Printf("Took %v to load model and policy", time.Since(start))
+}
+
+// enforcer get reference to the enforcer
+func enforcer() *casbin.Enforcer {
+	return atomicValue.Load().(*casbin.Enforcer)
+}
+
+func SetEnforcer(policy, model string) {
+	sa := scas.NewAdapter(policy)
+	e := casbin.NewEnforcer(casbin.NewModel(model), sa)
+
+	atomicValue.Store(e)
 }
 
 type objects struct {
@@ -128,7 +143,7 @@ func newAuthObj(u user, object, action string) authObj {
 }
 
 func (ao *authObj) canAct() bool {
-	return roles.CheckAllowForRoles(ao.object, ao.action, ao.user.roles...)
+	return roles.CheckAllowForRoles(enforcer(), ao.object, ao.action, ao.user.roles...)
 }
 
 func TestRole(t *testing.T) {
@@ -147,27 +162,27 @@ func TestRole(t *testing.T) {
 	start := time.Now()
 
 	// base user can read content
-	pass := roles.CheckAllowForRoles(Objects.Content, Actions.Read, baseUser.roles...)
+	pass := roles.CheckAllowForRoles(enforcer(), Objects.Content, Actions.Read, baseUser.roles...)
 	is.Equal(pass, true)
 
 	// base user cannot create content
-	pass = roles.CheckAllowForRoles(Objects.Content, Actions.Create, baseUser.roles...)
+	pass = roles.CheckAllowForRoles(enforcer(), Objects.Content, Actions.Create, baseUser.roles...)
 	is.Equal(pass, false)
 
 	// editor can modify content
-	pass = roles.CheckAllowForRoles(Objects.Content, Actions.Write, editUser.roles...)
+	pass = roles.CheckAllowForRoles(enforcer(), Objects.Content, Actions.Write, editUser.roles...)
 	is.Equal(pass, true)
 
 	// admin user can modify content
-	pass = roles.CheckAllowForRoles(Objects.Content, Actions.Write, adminUser.roles...)
+	pass = roles.CheckAllowForRoles(enforcer(), Objects.Content, Actions.Write, adminUser.roles...)
 	is.Equal(pass, true)
 
 	// admin user cannot delete content
-	pass = roles.CheckAllowForRoles(Objects.Content, Actions.Delete, adminUser.roles...)
+	pass = roles.CheckAllowForRoles(enforcer(), Objects.Content, Actions.Delete, adminUser.roles...)
 	is.Equal(pass, false)
 
 	// root user can delete content
-	pass = roles.CheckAllowForRoles(Objects.Content, Actions.Delete, rootUser.roles...)
+	pass = roles.CheckAllowForRoles(enforcer(), Objects.Content, Actions.Delete, rootUser.roles...)
 	is.Equal(pass, true)
 
 	// Get a go/no-go result for a struct function tied to an object and action
@@ -202,7 +217,7 @@ func BenchmarkCheckRoles(b *testing.B) {
 	b.SetParallelism(30)
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			pass = roles.CheckAllowForRoles(Objects.Content, Actions.Delete, rootUser.roles...)
+			pass = roles.CheckAllowForRoles(enforcer(), Objects.Content, Actions.Delete, rootUser.roles...)
 		}
 	})
 
@@ -222,7 +237,7 @@ func BenchmarkCheckRolesBare(b *testing.B) {
 	b.SetParallelism(30)
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			pass = roles.CheckAllowForRoles(Objects.Content, Actions.Delete, []string{Roles.Root}...)
+			pass = roles.CheckAllowForRoles(enforcer(), Objects.Content, Actions.Delete, []string{Roles.Root}...)
 		}
 	})
 
