@@ -170,6 +170,7 @@ func TestRole(t *testing.T) {
 	pass = roles.CheckAllowForRoles(Objects.Content, Actions.Delete, rootUser.roles...)
 	is.Equal(pass, true)
 
+	// Get a go/no-go result for a struct function tied to an object and action
 	u := newUser("base user", baseUser.roles)
 	ao := newAuthObj(u, Objects.Content, Actions.Read)
 	canAct := ao.canAct()
