@@ -12,8 +12,8 @@ func checkEnforce(e *casbin.Enforcer, sub, obj, act string) bool {
 	return e.Enforce(sub, obj, act)
 }
 
-// CheckAllowForRoles check object and action against list of groups
-func CheckAllowForRoles(e *casbin.Enforcer, obj string, act string, roles ...string) bool {
+// HasValidRole check object and action against list of groups/roles
+func HasValidRole(e *casbin.Enforcer, obj string, act string, roles ...string) bool {
 	for _, r := range roles {
 		var pass bool = checkEnforce(e, r, obj, act)
 		if pass == true {

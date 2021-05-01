@@ -126,7 +126,7 @@ func NewAuthObj(u User, object, action string) AuthObj {
 
 // CanAct define whether one of a set of roles can act on an object
 func (ao *AuthObj) CanAct() bool {
-	return roles.CheckAllowForRoles(enforcer(), ao.object, ao.action, ao.user.roles...)
+	return roles.HasValidRole(enforcer(), ao.object, ao.action, ao.user.roles...)
 }
 
 // TestRole test the basic role functionality
@@ -146,27 +146,27 @@ func TestRole(t *testing.T) {
 	start := time.Now()
 
 	// base user can read content
-	pass := roles.CheckAllowForRoles(enforcer(), ObjContent, ActionRead, baseUser.roles...)
+	pass := roles.HasValidRole(enforcer(), ObjContent, ActionRead, baseUser.roles...)
 	is.Equal(pass, true)
 
 	// base user cannot create content
-	pass = roles.CheckAllowForRoles(enforcer(), ObjContent, ActionCreate, baseUser.roles...)
+	pass = roles.HasValidRole(enforcer(), ObjContent, ActionCreate, baseUser.roles...)
 	is.Equal(pass, false)
 
 	// editor can modify content
-	pass = roles.CheckAllowForRoles(enforcer(), ObjContent, ActionWrite, editUser.roles...)
+	pass = roles.HasValidRole(enforcer(), ObjContent, ActionWrite, editUser.roles...)
 	is.Equal(pass, true)
 
 	// admin user can modify content
-	pass = roles.CheckAllowForRoles(enforcer(), ObjContent, ActionWrite, adminUser.roles...)
+	pass = roles.HasValidRole(enforcer(), ObjContent, ActionWrite, adminUser.roles...)
 	is.Equal(pass, true)
 
 	// admin user cannot delete content
-	pass = roles.CheckAllowForRoles(enforcer(), ObjContent, ActionDelete, adminUser.roles...)
+	pass = roles.HasValidRole(enforcer(), ObjContent, ActionDelete, adminUser.roles...)
 	is.Equal(pass, false)
 
 	// root user can delete content
-	pass = roles.CheckAllowForRoles(enforcer(), ObjContent, ActionDelete, rootUser.roles...)
+	pass = roles.HasValidRole(enforcer(), ObjContent, ActionDelete, rootUser.roles...)
 	is.Equal(pass, true)
 
 	// Get a go/no-go result for a struct function tied to an object and action
@@ -201,7 +201,7 @@ func BenchmarkCheckRoles(b *testing.B) {
 	b.SetParallelism(30)
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			pass = roles.CheckAllowForRoles(enforcer(), ObjContent, ActionDelete, rootUser.roles...)
+			pass = roles.HasValidRole(enforcer(), ObjContent, ActionDelete, rootUser.roles...)
 		}
 	})
 
