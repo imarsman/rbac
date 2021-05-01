@@ -68,68 +68,45 @@ func SetEnforcer(policy, model string) {
 	atomicValue.Store(e)
 }
 
-type objects struct {
-	// General feed Obj
-	Content string
-	Account string
-}
+// Object constants
+const (
+	ObjContent string = "obj-content"
+	ObjAccount string = "obj-account"
+)
 
-// Objects authorization Obj patterns
-// These are role authorization inflection points, not specifically objects
-var Objects = objects{
-	Content: "obj-content",
-	Account: "obj-account",
-}
+// Action constants
+const (
+	ActionRead   string = "read"
+	ActionWrite  string = "write"
+	ActionCreate string = "create"
+	ActionDelete string = "delete"
+)
 
-// Action struct to hold the various named actions
-type actions struct {
-	Read   string
-	Write  string
-	Create string
-	Delete string
-}
+// Role constants
+const (
+	RoleUser   string = "user"
+	RoleEditor string = "editor"
+	RoleAdmin  string = "admin"
+	RoleRoot   string = "root"
+)
 
-// Actions values that can be allowed on an object by a role
-var Actions = actions{
-	Read:   "read",
-	Write:  "write",
-	Create: "create",
-	Delete: "delete",
-}
-
-// Roles struct defining various roles that a user may posess
-type userRoles struct {
-	User   string
-	Editor string
-	Admin  string
-	Root   string
-}
-
-// Roles values for roles that can be granted to clients
-var Roles = userRoles{
-	User:   "user",
-	Editor: "editor",
-	Admin:  "admin",
-	Root:   "root",
-}
-
-// user struct simulates a user with roles defined
-type user struct {
+// User struct simulates a User with roles defined
+type User struct {
 	name  string
 	roles []string
 }
 
-// newUser make a new user object
-func newUser(name string, roles []string) user {
-	u := new(user)
+// NewUser make a new user object
+func NewUser(name string, roles []string) User {
+	u := new(User)
 	u.name = name
 	u.roles = roles
 	return *u
 }
 
-// authObj simulates a struct that can be used to authorize an action
-type authObj struct {
-	user   user
+// AuthObj simulates a struct that can be used to authorize an action
+type AuthObj struct {
+	user   User
 	object string
 	action string
 }
@@ -137,8 +114,8 @@ type authObj struct {
 // This can be used for things like http middleware when the user is known and
 // the user's roles can be looked up. The user's roles can be authorized against
 // the object and action. This is simulated by the canAct function.
-func newAuthObj(u user, object, action string) authObj {
-	ao := authObj{
+func NewAuthObj(u User, object, action string) AuthObj {
+	ao := AuthObj{
 		user:   u,
 		object: object,
 		action: action,
@@ -147,8 +124,8 @@ func newAuthObj(u user, object, action string) authObj {
 	return ao
 }
 
-// canAct define whether one of a set of roles can act on an object
-func (ao *authObj) canAct() bool {
+// CanAct define whether one of a set of roles can act on an object
+func (ao *AuthObj) CanAct() bool {
 	return roles.CheckAllowForRoles(enforcer(), ao.object, ao.action, ao.user.roles...)
 }
 
@@ -156,46 +133,46 @@ func (ao *authObj) canAct() bool {
 func TestRole(t *testing.T) {
 	is := is.New(t)
 
-	userRole := []string{Roles.User}
-	editorRole := []string{Roles.Editor}
-	adminRole := []string{Roles.Admin}
-	rootRole := []string{Roles.Root}
+	userRole := []string{RoleUser}
+	editorRole := []string{RoleEditor}
+	adminRole := []string{RoleAdmin}
+	rootRole := []string{RoleRoot}
 
-	baseUser := newUser("baseuser", userRole)
-	editUser := newUser("edit", editorRole)
-	adminUser := newUser("admin", adminRole)
-	rootUser := newUser("admin", rootRole)
+	baseUser := NewUser("baseuser", userRole)
+	editUser := NewUser("edit", editorRole)
+	adminUser := NewUser("admin", adminRole)
+	rootUser := NewUser("admin", rootRole)
 
 	start := time.Now()
 
 	// base user can read content
-	pass := roles.CheckAllowForRoles(enforcer(), Objects.Content, Actions.Read, baseUser.roles...)
+	pass := roles.CheckAllowForRoles(enforcer(), ObjContent, ActionRead, baseUser.roles...)
 	is.Equal(pass, true)
 
 	// base user cannot create content
-	pass = roles.CheckAllowForRoles(enforcer(), Objects.Content, Actions.Create, baseUser.roles...)
+	pass = roles.CheckAllowForRoles(enforcer(), ObjContent, ActionCreate, baseUser.roles...)
 	is.Equal(pass, false)
 
 	// editor can modify content
-	pass = roles.CheckAllowForRoles(enforcer(), Objects.Content, Actions.Write, editUser.roles...)
+	pass = roles.CheckAllowForRoles(enforcer(), ObjContent, ActionWrite, editUser.roles...)
 	is.Equal(pass, true)
 
 	// admin user can modify content
-	pass = roles.CheckAllowForRoles(enforcer(), Objects.Content, Actions.Write, adminUser.roles...)
+	pass = roles.CheckAllowForRoles(enforcer(), ObjContent, ActionWrite, adminUser.roles...)
 	is.Equal(pass, true)
 
 	// admin user cannot delete content
-	pass = roles.CheckAllowForRoles(enforcer(), Objects.Content, Actions.Delete, adminUser.roles...)
+	pass = roles.CheckAllowForRoles(enforcer(), ObjContent, ActionDelete, adminUser.roles...)
 	is.Equal(pass, false)
 
 	// root user can delete content
-	pass = roles.CheckAllowForRoles(enforcer(), Objects.Content, Actions.Delete, rootUser.roles...)
+	pass = roles.CheckAllowForRoles(enforcer(), ObjContent, ActionDelete, rootUser.roles...)
 	is.Equal(pass, true)
 
 	// Get a go/no-go result for a struct function tied to an object and action
-	u := newUser("base user", baseUser.roles)
-	ao := newAuthObj(u, Objects.Content, Actions.Read)
-	canAct := ao.canAct()
+	u := NewUser("base user", baseUser.roles)
+	ao := NewAuthObj(u, ObjContent, ActionRead)
+	canAct := ao.CanAct()
 	is.Equal(canAct, true)
 
 	t.Logf("Took %v to process after load", time.Since(start))
@@ -214,8 +191,8 @@ BenchmarkCheckRolesBare-12   12578 ns/op   0.80 MB/s   14882 B/op     181 allocs
 func BenchmarkCheckRoles(b *testing.B) {
 	is := is.New(b)
 
-	rootRole := []string{Roles.Root}
-	rootUser := newUser("admin", rootRole)
+	rootRole := []string{RoleRoot}
+	rootUser := NewUser("admin", rootRole)
 
 	var pass bool
 
@@ -224,7 +201,7 @@ func BenchmarkCheckRoles(b *testing.B) {
 	b.SetParallelism(30)
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			pass = roles.CheckAllowForRoles(enforcer(), Objects.Content, Actions.Delete, rootUser.roles...)
+			pass = roles.CheckAllowForRoles(enforcer(), ObjContent, ActionDelete, rootUser.roles...)
 		}
 	})
 
