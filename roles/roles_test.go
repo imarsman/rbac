@@ -230,20 +230,3 @@ func BenchmarkCheckRoles(b *testing.B) {
 
 	is.Equal(pass, true) // Should not have an empty time
 }
-
-// func BenchmarkCheckRolesBare(b *testing.B) {
-// 	is := is.New(b)
-
-// 	var pass bool
-
-// 	b.SetBytes(bechmarkBytesPerOp)
-// 	b.ReportAllocs()
-// 	b.SetParallelism(30)
-// 	b.RunParallel(func(pb *testing.PB) {
-// 		for pb.Next() {
-// 			pass = roles.CheckAllowForRoles(enforcer(), Objects.Content, Actions.Delete, []string{Roles.Root}...)
-// 		}
-// 	})
-
-// 	is.Equal(pass, true) // Should not have an empty time
-// }
