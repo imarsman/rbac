@@ -3,13 +3,14 @@
 
 # The Casbin library is extremely flexible in how policies and models can be
 # implemented. This implementation leans towards use for roles attached to users
-# with actions on object.
+# with actions on object. This is fine with Casbin and discussed in its
+# documentation.
 
 # The Casbin library tends to assume that users are included in the policy file
 # but enforcement works fine just using the roles defined for a client in the
 # client's config file. The roles code iterates through all of the roles for a
-# user and if any return # an enabling response to a check the client is assumed
-# to be authorized for the action tested.
+# user and if any return the action is allowed and the client is assumed to be 
+# authorized for the action tested.
 
 # - predicates lines give a role (subject) then an object then an action
 #   - subjects have a set of one or more roles from their configuration
@@ -20,18 +21,40 @@
 # - groups combine a new role with an existing predicate role
 
 # Predicates
-# Sub-roles used by later roles. Could be used as roles when authenticating as well.
+# Sub-roles used by later groups. Could be used as roles when authenticating as well.
+
+# Actions assigned one by one to subject and object for contentview
 p, contentview, obj-content, read
 
-p, accountedit, obj-account, (read)|(write)
+# If using regex matching can use this, but it is slower
+# p, accountedit, obj-account, (read)|(write)
+# p, contentedit, obj-content, (read)|(write)
+# p, contentadmin, obj-content, (read)|(write)|(create)|(delete)
+# p, accountadmin, obj-account, (read)|(write)|(create)|(delete)
 
-p, contentedit, obj-content, (read)|(write)
+# Actions assigned one by one to subject and object for accountedit
+p, accountedit, obj-account, read
+p, accountedit, obj-account, write
 
-p, contentadmin, obj-content, (read)|(write)|(create)|(delete)
+# Actions assigned one by one to subject and object for contentedit
+p, contentedit, obj-content, read
+p, contentedit, obj-content, write
 
-p, accountadmin, obj-account, (read)|(write)|(create)|(delete)
+# Actions assigned one by one to subject and object for contentadmin
+p, contentadmin, obj-content, read
+p, contentadmin, obj-content, write
+p, contentadmin, obj-content, create
+p, contentadmin, obj-content, delete
 
-# Groups
+# Actions assigned one by one to subject and object for accountadmin
+p, accountadmin, obj-account, read
+p, accountadmin, obj-account, write
+p, accountadmin, obj-account, create
+p, accountadmin, obj-account, delete
+
+
+# Groups - inherit from policy based settings
+
 # Base user role
 g, user, contentview
 
